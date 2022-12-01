@@ -1,9 +1,10 @@
-package dec01
+package day01
 
 import InputLoader
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
-private fun handleInput(input: String): Int =
+private fun elvesBadges(input: String): ImmutableList<Int> =
     input
         .lines()
         .fold(
@@ -19,11 +20,20 @@ private fun handleInput(input: String): Int =
         .let { acc ->
             acc.first.add(acc.second)
         }
-        .max()
+
+private fun List<Int>.top3Sum() =
+    sortedDescending()
+        .take(3)
+        .sumOf { it }
 
 fun main(args: Array<String>) {
-    println(handleInput(TEST_INPUT))
-    println(handleInput(InputLoader.loadInput("dec01")))
+    listOf(
+        TEST_INPUT, InputLoader.loadInput("day01")
+    ).forEach { input ->
+        println(elvesBadges(input).max())
+        println(elvesBadges(input).top3Sum())
+        println()
+    }
 }
 
 private const val TEST_INPUT = """
