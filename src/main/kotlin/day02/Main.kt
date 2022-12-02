@@ -2,49 +2,73 @@ package day02
 
 import InputLoader
 
-object Score {
-    const val WIN = 6
-    const val DRAW = 3
-    const val LOSE = 0
+enum class Result(val score: Int, val hint: Char) {
+    WIN(6, 'Z'),
+    DRAW(3, 'Y'),
+    LOSE(0, 'X'),
 }
 
-enum class Option(val op: Char, val you: Char, val score: Int) {
+enum class Option(val elf: Char, val you: Char, val score: Int) {
     ROCK('A', 'X', 1),
     PAPER('B', 'Y', 2),
     SCISSORS('C', 'Z', 3), ;
 }
 
-private fun String.parseInput() =
+
+private fun String.parseInputActual(): List<Pair<Option, Result>> =
     lines().map { line ->
-        val (op, you) = line.split(" ")
-        Option.values().first { it.op == op[0] } to
+        val (elf, you) = line.split(" ")
+        Option.values().first { it.elf == elf[0] } to
+                Result.values().first { it.hint == you[0] }
+    }
+
+private fun Option.withIntent(intent: Result) =
+    when (intent) {
+        Result.WIN -> when (this) {
+            Option.ROCK -> Option.PAPER
+            Option.PAPER -> Option.SCISSORS
+            Option.SCISSORS -> Option.ROCK
+        }
+
+        Result.DRAW -> this
+
+        Result.LOSE -> when (this) {
+            Option.ROCK -> Option.SCISSORS
+            Option.PAPER -> Option.ROCK
+            Option.SCISSORS -> Option.PAPER
+        }
+    }
+
+private fun Pair<Option, Result>.scoreActual(): Int =
+    (first.withIntent(second).score + second.score)
+
+
+private fun String.parseInputGuessed(): List<Pair<Option, Option>> =
+    lines().map { line ->
+        val (elf, you) = line.split(" ")
+        Option.values().first { it.elf == elf[0] } to
                 Option.values().first { it.you == you[0] }
     }
 
 private fun Pair<Option, Option>.checkElfWin(): Boolean =
-    first == Option.ROCK && second == Option.SCISSORS
-            || first == Option.PAPER && second == Option.ROCK
-            || first == Option.SCISSORS && second == Option.PAPER
+    first == second.withIntent(Result.WIN)
 
+private fun Pair<Option, Option>.scoreGuessed(): Int =
+    when {
+        first == second -> Result.DRAW
+        checkElfWin() -> Result.LOSE
+        else -> Result.WIN
+    }.score + second.score
 
-private fun Pair<Option, Option>.score(): Int {
-    val (f, s) = this
-    if (f == s) return Score.DRAW + s.score
-
-    return if (checkElfWin()) {
-        s.score + Score.LOSE
-    } else
-        s.score + Score.WIN
-}
 
 fun main() {
     sequenceOf(
         testInput,
         InputLoader.loadInput("day02"),
     )
-        .map { it.parseInput() }
         .forEach { input ->
-            println(input.sumOf { it.score() })
+            println(input.parseInputGuessed().sumOf { it.scoreGuessed() })
+            println(input.parseInputActual().sumOf { it.scoreActual() })
         }
 }
 
