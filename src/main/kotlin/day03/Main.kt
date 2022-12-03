@@ -6,9 +6,9 @@ private fun String.splitHalves() =
     (length / 2).let { l -> take(l) to drop(l) }
 
 private fun Char.priority() =
-    when(this) {
-        in 'a' .. 'z' -> this - 'a'
-        in 'A' .. 'Z' -> this - 'A' + ('z' - 'a' + 1)
+    when (this) {
+        in 'a'..'z' -> this - 'a'
+        in 'A'..'Z' -> this - 'A' + ('z' - 'a' + 1)
         else -> 0
     } + 1
 
@@ -23,6 +23,18 @@ private fun part01(input: String): Int =
         it.priority()
     }
 
+private fun part02(input: String): Int =
+    input.lines()
+        .chunked(3)
+        .map { chunk ->
+            chunk
+                .map { it.toSet() }
+                .reduce { i1, i2 -> i1.intersect(i2) }
+                .first()
+        }
+        .sumOf {
+            it.priority()
+        }
 
 fun main() {
     listOf(
@@ -30,6 +42,7 @@ fun main() {
         InputLoader.loadInput("day03")
     ).forEach { input ->
         println(part01(input))
+        println(part02(input))
     }
 }
 
