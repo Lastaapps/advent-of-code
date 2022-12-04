@@ -3,24 +3,38 @@ package day04
 private infix fun IntRange.isIn(other: IntRange): Boolean =
     first in other && endInclusive in other
 
+private infix fun IntRange.intersects(other: IntRange): Boolean =
+    first in other || endInclusive in other || other.isIn(this)
+
 private fun String.toRange() =
     split("-")
         .let { (from, to) ->
-            from.toInt() .. to.toInt()
+            from.toInt()..to.toInt()
         }
 
-private fun String.part01() : Int =
+private fun String.processElves(process: (first: IntRange, second: IntRange) -> Boolean) =
     lines()
         .map { line ->
             line
                 .split(",")
-                .map { range -> range.toRange() }
-                .let { (first, second) ->
-                    first isIn second || second isIn first
+                .map { range ->
+                    range.toRange()
                 }
-        }.sumOf {
-            (if (it) 1 else 0) as Int
-        }
+                .let { (first, second) ->
+                    process(first, second)
+                }
+        }.count { it }
+
+private fun String.part01(): Int =
+    processElves { first, second ->
+        first isIn second || second isIn first
+    }
+
+private fun String.part02(): Int =
+    processElves { first, second ->
+        first intersects second
+        // first.intersect(second).isNotEmpty()
+    }
 
 fun main() {
     listOf(
@@ -28,6 +42,7 @@ fun main() {
         InputLoader.loadInput("day04"),
     ).forEach { input ->
         println(input.part01())
+        println(input.part02())
     }
 }
 
