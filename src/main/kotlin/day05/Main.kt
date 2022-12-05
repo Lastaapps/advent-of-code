@@ -66,12 +66,36 @@ fun String.part01() : String {
     return stacks.map { it.peek() }.joinToString("")
 }
 
+fun List<Stack<Char>>.applyAdvancedOperation(operation: Operation) {
+    val tmpStack = Stack<Char>()
+    repeat(operation.count) {
+        tmpStack += this[operation.from].peek()
+        this[operation.from].pop()
+    }
+    repeat(operation.count) {
+        this[operation.to] += tmpStack.peek()
+        tmpStack.pop()
+    }
+}
+
+fun String.part02() : String {
+    val (stackInput, operations) = parseInput()
+    val stacks = stackInput.toStacks()
+
+    operations.forEach {
+        stacks.applyAdvancedOperation(it)
+    }
+
+    return stacks.map { it.peek() }.joinToString("")
+}
+
 fun main() {
     listOf(
         TEST_INPUT,
         InputLoader.loadInput("day05"),
     ).forEach { input ->
         println(input.part01())
+        println(input.part02())
     }
 }
 
