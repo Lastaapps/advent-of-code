@@ -4,6 +4,8 @@ import InputLoader
 import io.kotest.matchers.shouldBe
 
 private const val SMALL_DIR_THRESHOLD = 100_000
+private const val DISK_SIZE = 70_000_000
+private const val FREE_REQUIRED = 30_000_000
 
 sealed interface DirType {
     object Root : DirType
@@ -146,6 +148,52 @@ private fun String.part01(): Long =
         // .also { it.printTree() }
         .filterSmallDirsSum()
 
+
+
+
+private fun Node.Dir.dirSize() : Long =
+    items.fold(0L) { a, item ->
+        a + when(item) {
+            is Node.Dir ->
+                item.dirSize()
+
+            is Node.File ->
+                item.size
+        }
+    }
+
+private fun Node.Dir.findToDelete(threshold: Long, acu: Array<Long>) : Long {
+    val res = items.fold(0L) { a, item ->
+        a + when(item) {
+            is Node.Dir ->
+                item.findToDelete(threshold, acu)
+
+            is Node.File ->
+                item.size
+        }
+    }
+    if (res >= threshold && res < acu[0]) {
+        acu[0] = res
+    }
+    return res
+}
+
+private fun Node.Dir.findToDelete(threshold: Long) : Long =
+    arrayOf(Long.MAX_VALUE).also { findToDelete(threshold, it) }[0]
+
+
+private fun String.part02(): Long =
+    this
+        .parseToCommands()
+        .processCommands()
+        .let { commands ->
+            val threshold = commands.dirSize()
+            .let { used -> FREE_REQUIRED - (DISK_SIZE - used)}
+
+            commands.findToDelete(threshold)
+        }
+
+
 private fun Node.printTree(offset: Int = 0) {
     print("".padStart(offset) + "- ")
     when(this) {
@@ -161,9 +209,11 @@ private fun Node.printTree(offset: Int = 0) {
 
 fun main() {
     testInput.part01() shouldBe TEST_RES_PART_01
+    testInput.part02() shouldBe TEST_RES_PART_02
 
     val input = InputLoader.loadInput("day07")
     println(input.part01())
+    println(input.part02())
 }
 
 private val testInput = """
@@ -193,3 +243,4 @@ ${'$'} ls
 """.trimIndent()
 
 private const val TEST_RES_PART_01 = 95437L
+private const val TEST_RES_PART_02 = 24933642L
