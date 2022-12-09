@@ -97,24 +97,26 @@ private fun String.part01(): Int =
         visited.size
     }
 
-private fun String.part02(): Int =
+private fun String.generalSolve(length: Int): Int =
     parseInput().let { input ->
-        val visited = mutableSetOf<Vector>()
+        mutableSetOf<Vector>().also { visited ->
+            MutableList(length) { Vector.zero }.let { rope ->
+                input.forEach { dir ->
+                    rope[0] += dir.toMovement()
 
-        val rope = MutableList(10) { Vector.zero }
+                    for (i in 1 until rope.size) {
+                        rope[i] += rope[i].follow(rope[i - 1])
+                    }
 
-        input.forEach { dir ->
-            rope[0] += dir.toMovement()
-
-            for (i in 1 until rope.size) {
-                rope[i] += rope[i].follow(rope[i - 1])
+                    visited += rope.last()
+                }
             }
-
-            visited += rope.last()
-        }
-
-        visited.size
+        }.size
     }
+
+private fun String.part015(): Int = generalSolve(2)
+
+private fun String.part02(): Int = generalSolve(10)
 
 private class NeighbourMather(val expected: Vector) : Matcher<Vector> {
     override fun test(value: Vector): MatcherResult =
@@ -137,11 +139,13 @@ fun main() {
     }
 
     testInput01.part01() shouldBe PART_01_RES
+    testInput01.part015() shouldBe PART_01_RES
     testInput01.part02() shouldBe PART_02_RES_A
     testInput02.part02() shouldBe PART_02_RES_B
 
     val input = InputLoader.loadInput("day09")
     println(input.part01())
+    println(input.part015())
     println(input.part02())
 }
 
