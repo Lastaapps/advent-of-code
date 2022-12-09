@@ -1,9 +1,10 @@
 package day09
 
+import io.kotest.matchers.Matcher
+import io.kotest.matchers.MatcherResult
+import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
-import kotlinx.collections.immutable.mutate
-import kotlinx.collections.immutable.persistentListOf
-import kotlin.math.*
+import kotlin.math.sign
 
 private enum class Dir {
     LEFT, RIGHT, UP, DOWN,
@@ -18,23 +19,21 @@ private enum class Dir {
             'D' -> DOWN
             else -> error("Unknown character")
         }
-
-        fun from(diff: Pair<Int, Int>) = when (diff) {
-            zero -> NONE
-            1 to 0 -> RIGHT
-            1 to 1 -> DR
-            0 to 1 -> DOWN
-            -1 to 1 -> DL
-            -1 to 0 -> LEFT
-            -1 to -1 -> UL
-            0 to -1 -> UP
-            1 to -1 -> UR
-            else -> error("Unsupported movement: $diff")
-        }
     }
 }
 
-private val zero = 0 to 0
+private data class Vector(val x: Int, val y: Int) {
+    companion object {
+        val zero = Vector(0, 0)
+    }
+}
+
+private operator fun Vector.plus(other: Vector): Vector =
+    Vector(x + other.x, y + other.y)
+
+private operator fun Vector.minus(other: Vector): Vector =
+    Vector(x - other.x, y - other.y)
+
 
 private fun String.parseInput(): Sequence<Dir> =
     lineSequence().map {
@@ -46,149 +45,14 @@ private fun String.parseInput(): Sequence<Dir> =
         }
     }.flatMap { it }
 
-private operator fun Pair<Int, Int>.plus(other: Pair<Int, Int>): Pair<Int, Int> =
-    Pair(first + other.first, second + other.second)
 
-private operator fun Pair<Int, Int>.minus(other: Pair<Int, Int>): Pair<Int, Int> =
-    Pair(first - other.first, second - other.second)
-
-private fun Pair<Int, Int>.maxAbs(): Int =
-    max(abs(first), abs(second))
-
-private fun String.part01() =
-    parseInput().let { data ->
-        val positions = mutableSetOf<Pair<Int, Int>>()
-
-        var head = Pair(0, 0)
-        var tail = Pair(0, 0)
-
-        data.forEach { dir ->
-            val diff = head - tail
-
-            when (dir) {
-                Dir.LEFT -> {
-                    if (diff.first < 0) {
-                        tail = head
-                    }
-                    head += -1 to 0
-                }
-
-                Dir.RIGHT -> {
-                    if (diff.first > 0) {
-                        tail = head
-                    }
-                    head += 1 to 0
-                }
-
-                Dir.UP -> {
-                    if (diff.second < 0) {
-                        tail = head
-                    }
-                    head += 0 to -1
-                }
-
-                Dir.DOWN -> {
-                    if (diff.second > 0) {
-                        tail = head
-                    }
-                    head += 0 to 1
-                }
-
-                else -> error("Not supported in part 01")
-            }
-
-            positions += tail
-        }
-
-        positions.size
-    }
-
-private fun Pair<Int, Int>.moveHead(dir: Dir): Pair<Int, Int> =
-    this + when (dir) {
-        Dir.LEFT -> -1 to 0
-        Dir.RIGHT -> 1 to 0
-        Dir.UP -> 0 to -1
-        Dir.DOWN -> 0 to 1
-        else -> error("Cannot move head in the $dir direction")
-    }
-
-private fun Pair<Int, Int>.follow(head: Pair<Int, Int>, dir: Dir): Pair<Pair<Int, Int>, Dir> {
-    val diff = head - this
-
-    when (dir) {
-        Dir.LEFT -> {
-            if (diff.first < 0) {
-                head
-            } else {
-                this
-            }
-        }
-
-        Dir.RIGHT -> {
-            if (diff.first > 0) {
-                head
-            } else {
-                this
-            }
-        }
-
-        Dir.UP -> {
-            if (diff.second < 0) {
-                head
-            } else {
-                this
-            }
-        }
-
-        Dir.DOWN -> {
-            if (diff.second > 0) {
-                head
-            } else {
-                this
-            }
-        }
-
-        Dir.UL -> {
-            if (diff.first < 0 || diff.second < 0) {
-                this + (-1 to -1)
-            } else {
-                this
-            }
-        }
-        Dir.UR -> {
-            if (diff.first > 0 || diff.second < 0) {
-                this + (1 to -1)
-            } else {
-                this
-            }
-        }
-        Dir.DL -> {
-            if (diff.first < 0 || diff.second > 0) {
-                this + (-1 to 1)
-            } else {
-                this
-            }
-        }
-        Dir.DR -> {
-            if (diff.first > 0 || diff.second > 0) {
-                this + (1 to 1)
-            } else {
-                this
-            }
-        }
-        Dir.NONE -> this
-    }.let { newPos ->
-        return newPos to Dir.from(newPos - this)
-    }
-}
-
-private fun List<Pair<Int, Int>>.printMap() {
+private fun List<Vector>.printMap() {
     val toDraw = 12
     for (i in -toDraw..toDraw) {
         for (j in -toDraw..toDraw) {
-            val pos = j to i
+            val pos = Vector(j, i)
             when (val index = this.indexOf(pos)) {
-                -1 -> if (pos == zero) 's' else '.'
+                -1 -> if (pos == Vector.zero) 's' else '.'
                 0 -> 'H'
                 else -> index.toString().first()
             }.also { print(it) }
@@ -198,41 +62,76 @@ private fun List<Pair<Int, Int>>.printMap() {
     println()
 }
 
-private fun String.part02(): Int =
-    parseInput().let { data ->
-        val positions = mutableSetOf<Pair<Int, Int>>()
-
-        var knots = MutableList(10) { Pair(0, 0) }
-        knots.printMap()
-
-        data.forEach { headDir ->
-
-            val newKnots = mutableListOf<Pair<Int, Int>>()
-            newKnots += knots[0].moveHead(headDir)
-            var lastDir = headDir
-            for (i in 1 until 10) {
-                val (newPos, dir) = knots[i].follow(knots[i - 1], lastDir)
-                newKnots += newPos
-                lastDir = dir
-            }
-
-            knots = newKnots
-            knots.printMap()
-
-            positions += knots.last()
-        }
-
-        positions.size
+private fun Dir.toMovement() =
+    when (this) {
+        Dir.LEFT -> Vector(-1, 0)
+        Dir.RIGHT -> Vector(1, 0)
+        Dir.UP -> Vector(0, -1)
+        Dir.DOWN -> Vector(0, 1)
+        Dir.UL -> Vector(-1, -1)
+        Dir.UR -> Vector(1, -1)
+        Dir.DL -> Vector(-1, 1)
+        Dir.DR -> Vector(1, 1)
+        Dir.NONE -> Vector.zero
     }
 
+private fun Vector.areNeighbors(head: Vector): Boolean =
+    (this - head).let { it.x in -1..1 && it.y in -1..1 }
+
+private fun Vector.follow(head: Vector): Vector {
+    if (areNeighbors(head)) {
+        return Vector.zero
+    }
+    val diff = head - this
+    return Vector(diff.x.sign, diff.y.sign)
+}
+
+private fun String.part01(): Int =
+    parseInput().let { input ->
+        val visited = mutableSetOf<Vector>()
+
+        var head = Vector.zero
+        var tail = Vector.zero
+
+        input.forEach { dir ->
+            head += dir.toMovement()
+            tail += tail.follow(head)
+
+            visited += tail
+        }
+
+        visited.size
+    }
+
+private fun String.part02(): Int = 0
+
+private class NeighbourMather(val expected: Vector) : Matcher<Vector> {
+    override fun test(value: Vector): MatcherResult =
+        MatcherResult(
+            expected.areNeighbors(value),
+            { "$expected is not neighbour of $value" },
+            { "$expected is neighbour of $value" },
+        )
+}
+
+private infix fun Vector.shouldNeighbour(value: Vector) =
+    this.should(NeighbourMather(value))
+
 fun main() {
+    for (i in -2..2) {
+        for (j in -2..2) {
+            val toFollow = Vector(i, j)
+            Vector.zero.follow(toFollow) shouldNeighbour toFollow
+        }
+    }
+
     testInput01.part01() shouldBe PART_01_RES
-    testInput01.part02() shouldBe PART_02_RES_A
-    testInput02.part02() shouldBe PART_02_RES_B
+//    testInput01.part02() shouldBe PART_02_RES_A
+//    testInput02.part02() shouldBe PART_02_RES_B
 
     val input = InputLoader.loadInput("day09")
     println(input.part01())
-    println(input.part02())
+//    println(input.part02())
 }
 
 private val testInput01 = """
