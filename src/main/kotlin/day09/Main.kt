@@ -7,9 +7,7 @@ import io.kotest.matchers.shouldBe
 import kotlin.math.sign
 
 private enum class Dir {
-    LEFT, RIGHT, UP, DOWN,
-    UL, UR, DL, DR,
-    NONE;
+    LEFT, RIGHT, UP, DOWN;
 
     companion object {
         fun from(c: Char) = when (c) {
@@ -68,23 +66,19 @@ private fun Dir.toMovement() =
         Dir.RIGHT -> Vector(1, 0)
         Dir.UP -> Vector(0, -1)
         Dir.DOWN -> Vector(0, 1)
-        Dir.UL -> Vector(-1, -1)
-        Dir.UR -> Vector(1, -1)
-        Dir.DL -> Vector(-1, 1)
-        Dir.DR -> Vector(1, 1)
-        Dir.NONE -> Vector.zero
     }
 
 private fun Vector.areNeighbors(head: Vector): Boolean =
     (this - head).let { it.x in -1..1 && it.y in -1..1 }
 
-private fun Vector.follow(head: Vector): Vector {
+private fun Vector.follow(head: Vector): Vector =
     if (areNeighbors(head)) {
-        return Vector.zero
+        Vector.zero
+    } else {
+        (head - this).let { diff ->
+            Vector(diff.x.sign, diff.y.sign)
+        }
     }
-    val diff = head - this
-    return Vector(diff.x.sign, diff.y.sign)
-}
 
 private fun String.part01(): Int =
     parseInput().let { input ->
@@ -103,7 +97,24 @@ private fun String.part01(): Int =
         visited.size
     }
 
-private fun String.part02(): Int = 0
+private fun String.part02(): Int =
+    parseInput().let { input ->
+        val visited = mutableSetOf<Vector>()
+
+        val rope = MutableList(10) { Vector.zero }
+
+        input.forEach { dir ->
+            rope[0] += dir.toMovement()
+
+            for (i in 1 until rope.size) {
+                rope[i] += rope[i].follow(rope[i - 1])
+            }
+
+            visited += rope.last()
+        }
+
+        visited.size
+    }
 
 private class NeighbourMather(val expected: Vector) : Matcher<Vector> {
     override fun test(value: Vector): MatcherResult =
@@ -126,12 +137,12 @@ fun main() {
     }
 
     testInput01.part01() shouldBe PART_01_RES
-//    testInput01.part02() shouldBe PART_02_RES_A
-//    testInput02.part02() shouldBe PART_02_RES_B
+    testInput01.part02() shouldBe PART_02_RES_A
+    testInput02.part02() shouldBe PART_02_RES_B
 
     val input = InputLoader.loadInput("day09")
     println(input.part01())
-//    println(input.part02())
+    println(input.part02())
 }
 
 private val testInput01 = """
