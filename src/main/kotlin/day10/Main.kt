@@ -1,8 +1,10 @@
 package day10
 
 import InputLoader
-import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
+
+private const val CRT_W = 40
+private const val CRT_H = 6
 
 private sealed interface Inst {
     data class AddX(val value: Int) : Inst
@@ -47,22 +49,47 @@ private fun String.part01(): Int =
                 when (inst) {
                     is Inst.AddX -> inst.value
                     Inst.Noop -> 0
-                }.let { newAcc ->
-                    (if (index.shouldCompute()) acc * (index + 1) else 0).let { newTotal ->
-                        (acc to total) + (newAcc to newTotal)
+                }.let { accDiff ->
+                    (if (index.shouldCompute()) acc * (index + 1) else 0).let { totalDiff ->
+                        (acc to total) + (accDiff to totalDiff)
                     }
                 }
             }
         }.second
 
-private fun String.part02(): Int = 0
+private fun String.part02(): String =
+    parseInput()
+        .simplify()
+        .let { src ->
+            src.foldIndexed(1 to StringBuilder()) { index, (acc, crt), inst ->
+                when (inst) {
+                    is Inst.AddX -> inst.value
+                    Inst.Noop -> 0
+                }.let { accDiff ->
+
+                    crt.append(
+                        if ((acc - (index % CRT_W)) in -1..1) '#' else '.'
+                    ).let { crt ->
+                        if ((index + 1) % CRT_W == 0)
+                            crt.append('\n')
+                        else crt
+
+                    }.let { newCrt ->
+                        (acc + accDiff) to newCrt
+                    }
+                }
+            }
+        }
+        .second
+        .toString()
 
 fun main() {
     testInput.part01() shouldBe PART_01_RES
+    ('\n' + testInput.part02()) shouldBe ('\n' + PART_02_RES)
 
     InputLoader.loadInput("day10").let { input ->
         println(input.part01())
-        println(input.part02())
+        println(input.part02().replace("#", "█"))
     }
 }
 
@@ -217,3 +244,11 @@ noop
 """.trimIndent()
 
 private const val PART_01_RES = 13140
+private val PART_02_RES = """
+##..##..##..##..##..##..##..##..##..##..
+###...###...###...###...###...###...###.
+####....####....####....####....####....
+#####.....#####.....#####.....#####.....
+######......######......######......####
+#######.......#######.......#######.....
+""".trimIndent() + '\n'
