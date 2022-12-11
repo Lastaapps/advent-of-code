@@ -44,59 +44,45 @@ private fun String.parseMonkeys(): List<Monkey> =
 
 private infix fun Long.isModableBy(mod: Int): Boolean = mod(mod) == 0
 
-private fun String.part01(): Long =
+private fun String.solve(rounds: Int, calmer: (List<Monkey>) -> Int, applyCalm: (Long, caml: Int) -> Long): Long =
     parseMonkeys().let { monkeys ->
-        MutableList(monkeys.size) { 0L }.also { counter ->
-            repeat(ROUNDS_P1) {
-                monkeys.forEachIndexed { index, monkey ->
-                    counter[index] += monkey.items.size.toLong()
+        calmer(monkeys).let { calm ->
+            MutableList(monkeys.size) { 0L }.also { counter ->
+                repeat(rounds) {
+                    monkeys.forEachIndexed { index, monkey ->
+                        counter[index] += monkey.items.size.toLong()
 
-                    monkey.items.forEach { item ->
-                        val newWorriedness = monkey.operation(item) / 3
+                        monkey.items.forEach { item ->
+                            val newWorriedness = applyCalm(monkey.operation(item), calm)
 
-                        if (newWorriedness isModableBy monkey.prime) {
-                            monkeys[monkey.trueTarget].items
-                        } else {
-                            monkeys[monkey.falseTarget].items
-                        } += newWorriedness
+                            if (newWorriedness isModableBy monkey.prime) {
+                                monkeys[monkey.trueTarget].items
+                            } else {
+                                monkeys[monkey.falseTarget].items
+                            } += newWorriedness
+                        }
+                        monkey.items.clear()
                     }
-                    monkey.items.clear()
                 }
-            }
-        }.let { counter ->
-            counter.max().let { max ->
-                max * counter.filter { it != max }.max()
+            }.let { counter ->
+                counter.max().let { max ->
+                    max * counter.filter { it != max }.max()
+                }
             }
         }
     }
 
-private fun String.part02(): Long =
-    parseMonkeys().let { monkeys ->
-        val lcm = monkeys.asSequence().map { it.prime }.fold(1) { acu, i -> acu * i }
+private fun String.part01(): Long = solve(
+    ROUNDS_P1,
+    { 3 },
+    { item, calm -> item / calm },
+)
 
-        MutableList(monkeys.size) { 0L }.also { counter ->
-            repeat(ROUNDS_P2) {
-                monkeys.forEachIndexed { index, monkey ->
-                    counter[index] += monkey.items.size.toLong()
-
-                    monkey.items.forEach { item ->
-                        val newWorriedness = monkey.operation(item) % lcm
-
-                        if (newWorriedness isModableBy monkey.prime) {
-                            monkeys[monkey.trueTarget].items
-                        } else {
-                            monkeys[monkey.falseTarget].items
-                        } += newWorriedness
-                    }
-                    monkey.items.clear()
-                }
-            }
-        }.let { counter ->
-            counter.max().let { max ->
-                max * counter.filter { it != max }.max()
-            }
-        }
-    }
+private fun String.part02(): Long = solve(
+    ROUNDS_P2,
+    { monkeys -> monkeys.map { it.prime }.fold(1) { acu, i -> acu * i } },
+    { item, calm -> item % calm },
+)
 
 fun main() {
     testInput.part01() shouldBe PART_01_RES
