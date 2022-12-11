@@ -3,22 +3,23 @@ package day11
 import InputLoader
 import io.kotest.matchers.shouldBe
 
-private const val ROUNDS = 20
+private const val ROUNDS_P1 = 20
+private const val ROUNDS_P2 = 10_000
 
 private data class Monkey(
-    val items: MutableList<Int>,
-    val operation: (old: Int) -> Int,
+    val items: MutableList<Long>,
+    val operation: (old: Long) -> Long,
     val prime: Int,
     val trueTarget: Int,
     val falseTarget: Int,
 )
 
-private fun String.parseOperation(): (old: Int) -> Int =
+private fun String.parseOperation(): (old: Long) -> Long =
     split(" ").let { (operator, operand) ->
-        { old: Int ->
+        { old: Long ->
             val op = when (operand) {
                 "old" -> old
-                else -> operand.toInt()
+                else -> operand.toLong()
             }
             when (operator) {
                 "+" -> old + op
@@ -31,7 +32,7 @@ private fun String.parseOperation(): (old: Int) -> Int =
     }
 
 private fun List<String>.parseMonkey() = Monkey(
-    get(1).removePrefix("  Starting items: ").split(", ").map { it.toInt() }.toMutableList(),
+    get(1).removePrefix("  Starting items: ").split(", ").map { it.toLong() }.toMutableList(),
     get(2).removePrefix("  Operation: new = old ").parseOperation(),
     get(3).removePrefix("  Test: divisible by ").toInt(),
     get(4).removePrefix("    If true: throw to monkey ").toInt(),
@@ -41,15 +42,14 @@ private fun List<String>.parseMonkey() = Monkey(
 private fun String.parseMonkeys(): List<Monkey> =
     lines().chunked(7).map { chunk -> chunk.parseMonkey() }
 
-private infix fun Int.isModableBy(mod: Int): Boolean = mod(mod) == 0
-private infix fun Int.mods(mod: Int): Boolean = mod.mod(this) == 0
+private infix fun Long.isModableBy(mod: Int): Boolean = mod(mod) == 0
 
-private fun String.part01(): Int =
+private fun String.part01(): Long =
     parseMonkeys().let { monkeys ->
-        MutableList(monkeys.size) { 0 }.also { counter ->
-            repeat(ROUNDS) {
+        MutableList(monkeys.size) { 0L }.also { counter ->
+            repeat(ROUNDS_P1) {
                 monkeys.forEachIndexed { index, monkey ->
-                    counter[index] += monkey.items.size
+                    counter[index] += monkey.items.size.toLong()
 
                     monkey.items.forEach { item ->
                         val newWorriedness = monkey.operation(item) / 3
@@ -70,10 +70,37 @@ private fun String.part01(): Int =
         }
     }
 
-private fun String.part02(): Int = 0
+private fun String.part02(): Long =
+    parseMonkeys().let { monkeys ->
+        val lcm = monkeys.asSequence().map { it.prime }.fold(1) { acu, i -> acu * i }
+
+        MutableList(monkeys.size) { 0L }.also { counter ->
+            repeat(ROUNDS_P2) {
+                monkeys.forEachIndexed { index, monkey ->
+                    counter[index] += monkey.items.size.toLong()
+
+                    monkey.items.forEach { item ->
+                        val newWorriedness = monkey.operation(item) % lcm
+
+                        if (newWorriedness isModableBy monkey.prime) {
+                            monkeys[monkey.trueTarget].items
+                        } else {
+                            monkeys[monkey.falseTarget].items
+                        } += newWorriedness
+                    }
+                    monkey.items.clear()
+                }
+            }
+        }.let { counter ->
+            counter.max().let { max ->
+                max * counter.filter { it != max }.max()
+            }
+        }
+    }
 
 fun main() {
     testInput.part01() shouldBe PART_01_RES
+    testInput.part02() shouldBe PART_02_RES
 
     val input = InputLoader.loadInput("day11")
     println(input.part01())
@@ -110,4 +137,5 @@ Monkey 3:
     If false: throw to monkey 1
 """.trimIndent()
 
-private const val PART_01_RES = 10605
+private const val PART_01_RES = 10605L
+private const val PART_02_RES = 2713310158L
