@@ -2,8 +2,6 @@ package day12
 
 import InputLoader
 import io.kotest.matchers.shouldBe
-import kotlinx.collections.immutable.mutate
-import kotlinx.collections.immutable.persistentListOf
 
 private data class Point(val x: Int, val y: Int)
 
@@ -72,7 +70,43 @@ private fun String.part01(): Int {
         }
 }
 
-private fun String.part02(): Int = 0
+private fun String.part02(): Int {
+    val start = findChar('E')
+
+    replace('S', 'a')
+        .replace('E', 'z')
+        .lines()
+        .let { map ->
+
+            val queue = mutableListOf(start)
+            val visited = mutableSetOf<Point>(start)
+            val distances = mutableMapOf<Point, Int>(start to 0)
+
+            while (queue.isNotEmpty()) {
+                val item = queue.removeAt(0)
+                val char = map[item]
+                val dist = distances[item]!!
+
+                if (char == 'a') {
+                    return dist
+                }
+
+                item.neighborhood(map).forEach { point ->
+                    if (point in visited)
+                        return@forEach
+
+                    val desChar = map[point]
+                    if (char - 1 > desChar) return@forEach
+
+                    visited += point
+                    distances[point] = dist + 1
+                    queue.add(point)
+                }
+            }
+
+            error("Path not found")
+        }
+}
 
 fun main() {
     testInput.part01() shouldBe PART_01_RES
@@ -92,4 +126,4 @@ abdefghi
 """.trimIndent()
 
 private const val PART_01_RES = 31
-private const val PART_02_RES = 0
+private const val PART_02_RES = 29
