@@ -1,7 +1,7 @@
-package day07
+package y2022.day07
 
-import InputLoader
 import io.kotest.matchers.shouldBe
+import y2022.InputLoader
 
 private const val SMALL_DIR_THRESHOLD = 100_000
 private const val DISK_SIZE = 70_000_000
@@ -211,7 +211,7 @@ fun main() {
     testInput.part01() shouldBe TEST_RES_PART_01
     testInput.part02() shouldBe TEST_RES_PART_02
 
-    val input = InputLoader.loadInput("day07")
+    val input = InputLoader.loadInput("y2022/day07/day07")
     println(input.part01())
     println(input.part02())
 }

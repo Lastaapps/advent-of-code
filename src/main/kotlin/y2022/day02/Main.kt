@@ -1,6 +1,6 @@
-package day02
+package y2022.day02
 
-import InputLoader
+import y2022.InputLoader
 
 enum class Result(val score: Int, val hint: Char) {
     WIN(6, 'Z'),
@@ -64,7 +64,7 @@ private fun Pair<Option, Option>.scoreGuessed(): Int =
 fun main() {
     sequenceOf(
         testInput,
-        InputLoader.loadInput("day02"),
+        InputLoader.loadInput("y2022/day02/day02"),
     )
         .forEach { input ->
             println(input.parseInputGuessed().sumOf { it.scoreGuessed() })

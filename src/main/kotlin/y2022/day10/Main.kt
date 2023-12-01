@@ -1,7 +1,7 @@
-package day10
+package y2022.day10
 
-import InputLoader
 import io.kotest.matchers.shouldBe
+import y2022.InputLoader
 
 private const val CRT_W = 40
 private const val CRT_H = 6
@@ -87,7 +87,7 @@ fun main() {
     testInput.part01() shouldBe PART_01_RES
     ('\n' + testInput.part02()) shouldBe ('\n' + PART_02_RES)
 
-    InputLoader.loadInput("day10").let { input ->
+    InputLoader.loadInput("y2022/day10/day10").let { input ->
         println(input.part01())
         println(input.part02().replace("#", "█"))
     }

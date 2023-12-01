@@ -1,7 +1,7 @@
-package day06
+package y2022.day06
 
-import InputLoader
 import kotlinx.collections.immutable.persistentListOf
+import y2022.InputLoader
 
 private fun String.findMarker(length: Int) : Int {
     var queue = persistentListOf<Char>()
@@ -32,7 +32,7 @@ fun main() {
         require(it.first.part02() == it.second.second)
     }
 
-    val input = InputLoader.loadInput("day06")
+    val input = InputLoader.loadInput("y2022/day06/day06")
     println(input.part01())
     println(input.part02())
 }

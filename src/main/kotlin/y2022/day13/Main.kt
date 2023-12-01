@@ -1,8 +1,7 @@
-package day13
+package y2022.day13
 
-import InputLoader
 import io.kotest.matchers.shouldBe
-import kotlinx.collections.immutable.toPersistentList
+import y2022.InputLoader
 import kotlin.math.min
 
 private sealed interface Elem : Comparable<Elem> {
@@ -65,6 +64,7 @@ private fun ListIterator<Char>.parseList(): Elem.EList {
                 previous()
                 items.add(parseDigit())
             }
+
             else -> error("Unexpected character $char")
         }
     }
@@ -110,7 +110,7 @@ fun main() {
     testInput.part01() shouldBe PART_01_RES
     testInput.part02() shouldBe PART_02_RES
 
-    val input = InputLoader.loadInput("day13")
+    val input = InputLoader.loadInput("y2022/day13/day13")
     println(input.part01())
     println(input.part02())
 }

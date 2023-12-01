@@ -1,6 +1,7 @@
-package day05
+package y2022.day05
 
-import java.util.Stack
+import y2022.InputLoader
+import java.util.*
 
 data class Operation(
     val count: Int,
@@ -92,7 +93,7 @@ fun String.part02() : String {
 fun main() {
     listOf(
         TEST_INPUT,
-        InputLoader.loadInput("day05"),
+        InputLoader.loadInput("y2022/day05/day05"),
     ).forEach { input ->
         println(input.part01())
         println(input.part02())

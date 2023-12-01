@@ -1,4 +1,6 @@
-package day04
+package y2022.day04
+
+import y2022.InputLoader
 
 private infix fun IntRange.isIn(other: IntRange): Boolean =
     first in other && endInclusive in other
@@ -39,7 +41,7 @@ private fun String.part02(): Int =
 fun main() {
     listOf(
         TEST_INPUT,
-        InputLoader.loadInput("day04"),
+        InputLoader.loadInput("y2022/day04/day04"),
     ).forEach { input ->
         println(input.part01())
         println(input.part02())

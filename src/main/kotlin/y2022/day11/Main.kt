@@ -1,7 +1,7 @@
-package day11
+package y2022.day11
 
-import InputLoader
 import io.kotest.matchers.shouldBe
+import y2022.InputLoader
 
 private const val ROUNDS_P1 = 20
 private const val ROUNDS_P2 = 10_000
@@ -88,7 +88,7 @@ fun main() {
     testInput.part01() shouldBe PART_01_RES
     testInput.part02() shouldBe PART_02_RES
 
-    val input = InputLoader.loadInput("day11")
+    val input = InputLoader.loadInput("y2022/day11/day11")
     println(input.part01())
     println(input.part02())
 }
