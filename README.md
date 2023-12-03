@@ -13,6 +13,7 @@ All the code is located in `src/main/kotlin/y20XX/dayYY.idk`.
 ### 2023
 - [day01 (Racket)](src/main/kotlin/y2023/day01.rkt)
 - [day02 (RISC-V ASM)](src/main/kotlin/y2023/day02.asm)
+- [day03 (Holy C)](src/main/kotlin/y2023/day03/day03.hc)
 
 ### 2022 (all in Kotlin)
 - [day01](src/main/kotlin/y2022/day01/Main.kt)
