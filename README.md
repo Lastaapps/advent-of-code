@@ -11,11 +11,14 @@ All the code is located in `src/main/kotlin/y20XX/dayYY.idk`.
 
 ## Index
 ### 2023
-- [day01 (Racket)](src/main/kotlin/y2023/day01.rkt)
-- [day02 (RISC-V ASM)](src/main/kotlin/y2023/day02.asm)
-- [day03 (Holy C)](src/main/kotlin/y2023/day03/day03.hc)
+- [day01](src/main/kotlin/y2023/day01.rkt) (Racket)
+- [day02](src/main/kotlin/y2023/day02.asm) (RISC-V ASM)
+- [day03](src/main/kotlin/y2023/day03/day03.hc) ([Holy C](https://rosettacode.org/wiki/Category:HolyC))
+- [day04](src/main/kotlin/y2023/day04.ua) ([UIUA](https://www.uiua.org/))
 
-### 2022 (all in Kotlin)
+### 2022
+All the code is written in Kotlin.
+
 - [day01](src/main/kotlin/y2022/day01/Main.kt)
 - [day02](src/main/kotlin/y2022/day02/Main.kt)
 - [day03](src/main/kotlin/y2022/day03/Main.kt)
