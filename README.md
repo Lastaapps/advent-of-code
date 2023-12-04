@@ -4,6 +4,10 @@ These are my solutions of the tasks from the
 since the year 2022.
 All the tasks I have misses are missed because of time constraints (uni + work).
 
+I recommend you to also try the
+[AoC Wheel of names](https://wheelofnames.com/4md-rr4)
+or similar to choose your daily language!
+
 ## Structure
 The basic project structure is made for Kotlin as it has the most complicated
 build setup from all the languages used.
