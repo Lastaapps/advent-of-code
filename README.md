@@ -13,6 +13,9 @@ The basic project structure is made for Kotlin as it has the most complicated
 build setup from all the languages used.
 All the code is located in `src/main/kotlin/y20XX/dayYY.idk`.
 
+## Notice
+No AI tools were used during the apps development!
+
 ## Index
 ### 2023
 First (TODO 6+) days were chosen bye the wheel of fortune.
