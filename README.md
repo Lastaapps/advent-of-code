@@ -14,17 +14,18 @@ build setup from all the languages used.
 All the code is located in `src/main/kotlin/y20XX/dayYY.idk`.
 
 ## Notice
-No AI tools were used during the apps development!
+No AI tools were used during the development!
 
 ## Index
 ### 2023
-First (TODO 6+) days were chosen bye the wheel of fortune.
+First (TODO 7+) days were chosen bye the wheel of fortune.
 - [day01](src/main/kotlin/y2023/day01.rkt) (Racket)
 - [day02](src/main/kotlin/y2023/day02.asm) (RISC-V ASM)
 - [day03](src/main/kotlin/y2023/day03/day03.hc) ([Holy C](https://rosettacode.org/wiki/Category:HolyC))
 - [day04](src/main/kotlin/y2023/day04.ua) ([UIUA](https://www.uiua.org/))
 - [day05](src/main/kotlin/y2023/day05.py) (Python)
 - [day06](src/main/kotlin/y2023/day06/day06.go) (Go)
+- [day07](src/main/kotlin/y2023/day07/day07.cob) (COBOL and Python)
 
 ### 2022
 All the code is written in Kotlin.
