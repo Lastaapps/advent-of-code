@@ -26,6 +26,7 @@ First (TODO 7+) days were chosen bye the wheel of fortune.
 - [day05](src/main/kotlin/y2023/day05.py) (Python)
 - [day06](src/main/kotlin/y2023/day06/day06.go) (Go)
 - [day07](src/main/kotlin/y2023/day07/day07.cob) (COBOL and Python)
+- [day07](src/main/kotlin/y2023/day08/day08.py) (Python)
 
 ### 2022
 All the code is written in Kotlin.
