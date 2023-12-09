@@ -1,10 +1,11 @@
 package y2022.day09
 
+import InputLoader
+import Year
 import io.kotest.matchers.Matcher
 import io.kotest.matchers.MatcherResult
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
-import y2022.InputLoader
 import kotlin.math.sign
 
 private enum class Dir {
@@ -144,7 +145,7 @@ fun main() {
     testInput01.part02() shouldBe PART_02_RES_A
     testInput02.part02() shouldBe PART_02_RES_B
 
-    val input = InputLoader.loadInput("y2022/day09/day09")
+    val input = InputLoader.loadInput(Year.Y2022, "day09")
     println(input.part01())
     println(input.part015())
     println(input.part02())

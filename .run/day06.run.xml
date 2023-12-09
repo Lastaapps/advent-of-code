@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="day06" type="JetRunConfigurationType">
-    <option name="MAIN_CLASS_NAME" value="day06.MainKt" />
-    <module name="advent-of-code-2022.main" />
+      <option name="MAIN_CLASS_NAME" value="y2022.day06.MainKt"/>
+      <module name="advent-of-code.main"/>
     <shortenClasspath name="NONE" />
     <method v="2">
       <option name="Make" enabled="true" />

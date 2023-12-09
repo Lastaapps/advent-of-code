@@ -1,6 +1,7 @@
 package y2022.day03
 
-import y2022.InputLoader
+import InputLoader
+import Year
 
 private fun String.splitHalves() =
     (length / 2).let { l -> take(l) to drop(l) }
@@ -39,7 +40,7 @@ private fun part02(input: String): Int =
 fun main() {
     listOf(
         TEST_INPUT,
-        InputLoader.loadInput("y2022/day03/day03")
+        InputLoader.loadInput(Year.Y2022, "day03")
     ).forEach { input ->
         println(part01(input))
         println(part02(input))

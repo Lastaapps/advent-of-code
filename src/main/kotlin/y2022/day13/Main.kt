@@ -1,7 +1,8 @@
 package y2022.day13
 
+import InputLoader
+import Year
 import io.kotest.matchers.shouldBe
-import y2022.InputLoader
 import kotlin.math.min
 
 private sealed interface Elem : Comparable<Elem> {
@@ -110,7 +111,7 @@ fun main() {
     testInput.part01() shouldBe PART_01_RES
     testInput.part02() shouldBe PART_02_RES
 
-    val input = InputLoader.loadInput("y2022/day13/day13")
+    val input = InputLoader.loadInput(Year.Y2022, "day13")
     println(input.part01())
     println(input.part02())
 }

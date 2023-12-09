@@ -1,8 +1,9 @@
 package y2022.day01
 
+import InputLoader
+import Year
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
-import y2022.InputLoader
 
 private fun elvesBadges(input: String): ImmutableList<Int> =
     input
@@ -28,7 +29,7 @@ private fun List<Int>.top3Sum() =
 
 fun main(args: Array<String>) {
     listOf(
-        TEST_INPUT, InputLoader.loadInput("y2022/day01/day01")
+        TEST_INPUT, InputLoader.loadInput(Year.Y2022, "day01")
     ).forEach { input ->
         println(elvesBadges(input).max())
         println(elvesBadges(input).top3Sum())

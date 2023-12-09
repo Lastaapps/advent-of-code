@@ -1,6 +1,7 @@
 package y2022.day05
 
-import y2022.InputLoader
+import InputLoader
+import Year
 import java.util.*
 
 data class Operation(
@@ -93,7 +94,7 @@ fun String.part02() : String {
 fun main() {
     listOf(
         TEST_INPUT,
-        InputLoader.loadInput("y2022/day05/day05"),
+        InputLoader.loadInput(Year.Y2022, "day05"),
     ).forEach { input ->
         println(input.part01())
         println(input.part02())

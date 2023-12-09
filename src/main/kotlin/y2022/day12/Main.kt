@@ -1,7 +1,8 @@
 package y2022.day12
 
+import InputLoader
+import Year
 import io.kotest.matchers.shouldBe
-import y2022.InputLoader
 
 private data class Point(val x: Int, val y: Int)
 
@@ -112,7 +113,7 @@ fun main() {
     testInput.part01() shouldBe PART_01_RES
     testInput.part02() shouldBe PART_02_RES
 
-    val input = InputLoader.loadInput("y2022/day12/day12")
+    val input = InputLoader.loadInput(Year.Y2022, "day12")
     println(input.part01())
     println(input.part02())
 }
