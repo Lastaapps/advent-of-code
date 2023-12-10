@@ -3,6 +3,7 @@ package y2023.day10
 import InputLoader
 import Year
 import io.kotest.matchers.shouldBe
+import kotlin.math.absoluteValue
 
 private enum class Pipe(private val letter: Char) {
     GROUND('.'),
@@ -23,12 +24,12 @@ private enum class Pipe(private val letter: Char) {
 private data class Point(val x: Int, val y: Int)
 
 private operator fun Point.plus(other: Point): Point = Point(x + other.x, y + other.y)
+private operator fun Point.minus(other: Point): Point = Point(x - other.x, y - other.y)
 
 private typealias PipeList = List<List<Pipe>>
 
-private data class PointInMap(val map: PipeList, val point: Point)
-
-private fun PipeList.at(point: Point) = this[point.x][point.y]
+private operator fun <T> List<List<T>>.get(point: Point) = this[point.x][point.y]
+private operator fun <T> List<MutableList<T>>.set(point: Point, value: T) = (this[point.x].set(point.y, value))
 
 enum class Dir {
     SOUTH, NORTH, EAST, WEST, ;
@@ -62,11 +63,19 @@ private fun Pipe.directions() = when (this) {
     Pipe.SE -> listOf(Dir.SOUTH, Dir.EAST)
 }
 
+private tailrec fun proceed(
+    map: PipeList,
+    point: Point,
+    from: Dir,
+    prevPoint: Point,
+    length: Int = 1,
+    used: MutableSet<Point> = HashSet(),
+): Triple<Int, Set<Point>, Point>? {
+    val pipe = map[point]
+    used += point
 
-private tailrec fun proceed(pos: PointInMap, from: Dir, length: Int = 1): Int? {
-    val pipe = pos.map.at(pos.point)
     return if (pipe == Pipe.START) {
-        length
+        return Triple(length, used, prevPoint)
     } else {
         val directions = pipe.directions()
         val inverse = from.inverse()
@@ -75,11 +84,14 @@ private tailrec fun proceed(pos: PointInMap, from: Dir, length: Int = 1): Int? {
         }
 
         val dir = directions.first { it != inverse }
-        val nextPoint = pos.point.move(dir, pos.map) ?: return null
+        val nextPoint = point.move(dir, map) ?: return null
         proceed(
-            pos.copy(point = nextPoint),
+            map,
+            nextPoint,
             dir,
+            point,
             length + 1,
+            used,
         )
     }
 }
@@ -109,17 +121,93 @@ private fun String.part01(): Int {
     val start = input.findStart()
     return Pipe.START.directions().firstNotNullOf { dir ->
         start.move(dir, input)?.let {
-            proceed(PointInMap(input, it), dir)
+            proceed(input, it, dir, start)
         }
-    } / 2
+    }.first / 2
 }
 
-private fun String.part02(): Int =
-    PART_02_TEST
+private fun replaceStart(start: Point, neighbours: Pair<Point, Point>): Pipe {
+    val norm = neighbours.first - start
+    val inverse = neighbours.second - start
+
+    return when {
+        norm.x == 0 && inverse.x == 0 -> Pipe.HORIZONTAL
+        norm.x.absoluteValue == 1 && inverse.x.absoluteValue == 1 -> Pipe.VERTICAL
+        norm.x == 1 || inverse.x == 1 ->
+            if (norm.y == 1 || inverse.y == 1) {
+                Pipe.SW
+            } else {
+                Pipe.SE
+            }
+
+        norm.x == -1 || inverse.x == -1 ->
+            if (norm.y == 1 || inverse.y == 1) {
+                Pipe.NW
+            } else {
+                Pipe.NE
+            }
+
+        else -> error("You fucked up, there are more cases: $norm, $inverse")
+    }
+}
+
+private fun String.part02(): Int {
+    val input = parseInput().toList()
+    val start = input.findStart()
+    val (used, startNeighbours) = Pipe.START.directions().firstNotNullOf { dir ->
+        start.move(dir, input)?.let { point ->
+            proceed(input, point, dir, start)
+                ?.let {
+                    it.second to (point to it.third)
+                }
+        }
+    }
+
+    val startPipe = replaceStart(start, startNeighbours)
+
+    return input.indices.asSequence()
+        .zip(input.asSequence())
+        .sumOf { (i, pipes) ->
+
+            var isInNest = false
+            var startedTop = false
+            var tilesCnt = 0
+
+            pipes.indices.forEach { j ->
+                val point = Point(i, j)
+                if (point in used) {
+                    val pipe = pipes[j].takeUnless { it == Pipe.START } ?: startPipe
+
+                    fun resolveStarted(leavingTop: Boolean) {
+                        if (startedTop != leavingTop) {
+                            isInNest = !isInNest
+                        }
+                    }
+
+                    when (pipe) {
+                        Pipe.HORIZONTAL -> {}
+                        Pipe.VERTICAL -> isInNest = !isInNest
+                        Pipe.NE -> startedTop = true
+                        Pipe.SE -> startedTop = false
+                        Pipe.NW -> resolveStarted(true)
+                        Pipe.SW -> resolveStarted(false)
+                        Pipe.GROUND -> error("Invalid state - ground is a pipe")
+                        Pipe.START -> error("Start is not replaced")
+                    }
+                } else {
+                    if (isInNest) {
+                        tilesCnt++
+                    }
+                }
+            }
+            tilesCnt
+        }
+}
 
 fun main() {
-    testInput.part01() shouldBe PART_01_TEST
-    testInput.part02() shouldBe PART_02_TEST
+    testInput01.part01() shouldBe PART_01_TEST
+    testInput02.part02() shouldBe PART_02_TEST
+    // 1603 to high
 
     val input = InputLoader.loadInput(Year.Y2023, "day10")
     input.part01()
@@ -130,7 +218,7 @@ fun main() {
         .also { it shouldBe PART_02_PROD }
 }
 
-private val testInput = """
+private val testInput01 = """
 ..F7.
 .FJ|.
 SJ.L7
@@ -138,7 +226,20 @@ SJ.L7
 LJ...
 """.trimIndent()
 
+private val testInput02 = """
+FF7FSF7F7F7F7F7F---7
+L|LJ||||||||||||F--J
+FL-7LJLJ||||||LJL-77
+F--JF--7||LJLJ7F7FJ-
+L---JF-JLJ.||-FJLJJ7
+|F|F-JF---7F7-L7L|7|
+|FFJF7L7F-JF7|JL---7
+7-L-JL7||F7|L7F-7F7|
+L.L7LFJ|||||FJL7||LJ
+L7JLJL-JLJLJL--JLJ.L
+""".trimIndent()
+
 private const val PART_01_TEST = 8
 private const val PART_01_PROD = 6725
-private const val PART_02_TEST = 0
-private const val PART_02_PROD = 0
+private const val PART_02_TEST = 10
+private const val PART_02_PROD = 383
