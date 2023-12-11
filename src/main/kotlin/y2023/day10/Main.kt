@@ -207,7 +207,6 @@ private fun String.part02(): Int {
 fun main() {
     testInput01.part01() shouldBe PART_01_TEST
     testInput02.part02() shouldBe PART_02_TEST
-    // 1603 to high
 
     val input = InputLoader.loadInput(Year.Y2023, "day10")
     input.part01()
