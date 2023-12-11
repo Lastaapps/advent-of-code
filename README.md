@@ -30,6 +30,7 @@ First 7 days were chosen bye the wheel of fortune.
 - [day08](src/main/kotlin/y2023/day08/day08.py) (Python)
 - [day09](src/main/kotlin/y2023/day09/Main.kt) (Kotlin)
 - [day10](src/main/kotlin/y2023/day10/Main.kt) (Kotlin)
+- [day11](src/main/kotlin/y2023/day11/Main.kt) (Kotlin)
 
 ### 2022
 All the code is written in Kotlin.
