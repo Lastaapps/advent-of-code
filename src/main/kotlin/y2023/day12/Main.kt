@@ -11,21 +11,44 @@ private fun String.parseInput() =
             record.toList() to numbers.split(',').map { it.toInt() }
         }
 
+private fun Pair<List<Char>, List<Int>>.unfold(scale: Int = 5, fill: Char = '?'): Pair<List<Char>, List<Int>> =
+    Pair(
+        ArrayList<Char>(first.size * scale + scale - 1).also { list ->
+            repeat(scale) { i ->
+                if (i != 0) {
+                    list.add(fill)
+                }
+                list.addAll(first)
+            }
+        },
+        ArrayList<Int>(second.size * scale).also { list ->
+            repeat(scale) {
+                list.addAll(second)
+            }
+        },
+    )
+
 private fun <T> List<T>.subFrom(fromIndex: Int) = subList(fromIndex, size)
 
-// Yes, no cache (yet), not time for it now
-private fun countOptions(data: Pair<List<Char>, List<Int>>): Int {
-    val (text, numbers) = data
-
+private fun countOptions(
+    text: List<Char>,
+    numbers: List<Int>,
+    cache: MutableList<MutableList<Long>> = MutableList(text.size + 1) { MutableList(numbers.size + 1) { -1L } },
+): Long {
     if (text.isEmpty()) {
         return if (numbers.isEmpty()) 1 else 0
     }
 
+    val inCache = cache[text.size][numbers.size]
+    if (inCache != -1L) {
+        return inCache
+    }
+
     val first = text.first()
-    var cnt = 0
+    var cnt = 0L
 
     if (first != '#') { // '.', '?'
-        cnt += countOptions(text.subFrom(1) to numbers)
+        cnt += countOptions(text.subFrom(1), numbers, cache)
     }
 
     if (first != '.') { // '#', '?'
@@ -34,22 +57,31 @@ private fun countOptions(data: Pair<List<Char>, List<Int>>): Int {
                 && text.subList(0, required).none { it == '.' }
                 && text.getOrNull(required) != '#'
             ) {
-                countOptions(text.subFrom((required + 1).coerceAtMost(text.size)) to numbers.subFrom(1))
+                countOptions(
+                    text.subFrom((required + 1).coerceAtMost(text.size)),
+                    numbers.subFrom(1),
+                    cache,
+                )
             } else {
                 0
             }
         } ?: 0
     }
 
+    cache[text.size][numbers.size] = cnt
     return cnt
 }
 
 private fun String.part01() =
     parseInput()
-        .map { countOptions(it) }
+        .map { countOptions(it.first, it.second) }
         .sum()
 
-private fun String.part02() = PART_02_TEST
+private fun String.part02() =
+    parseInput()
+        .map { it.unfold() }
+        .map { countOptions(it.first, it.second) }
+        .sum()
 
 fun main() {
     testInput.part01() shouldBe PART_01_TEST
@@ -75,5 +107,5 @@ private val testInput = """
 
 private const val PART_01_TEST = 21
 private const val PART_01_PROD = 7173
-private const val PART_02_TEST = 0
-private const val PART_02_PROD = 0
+private const val PART_02_TEST = 525152
+private const val PART_02_PROD = 29826669191291
