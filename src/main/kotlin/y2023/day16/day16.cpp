@@ -158,7 +158,15 @@ private:
   }
 
 public:
-  void run() { dfs(0, 0, Direction::RIGHT); }
+  void run(const size_t x = 0, const size_t y = 0,
+           const Direction dir = Direction::RIGHT) {
+    dfs(x, y, dir);
+  }
+
+  void reset() {
+    data.clear();
+    data.resize(width * width);
+  }
 
   size_t visited() const {
     return width * width - std::count(data.begin(), data.end(), 0);
@@ -168,11 +176,38 @@ public:
 size_t part01(const std::string &filename) {
   const auto map = Map::fromFile(filename);
 
-  // Part 01
   auto dfs = Dfs(map);
   dfs.run();
   const auto visited = dfs.visited();
   return visited;
+}
+
+size_t part02Naive(const std::string &filename) {
+  const auto map = Map::fromFile(filename);
+  const size_t size = map.size();
+
+  size_t maxVisited = 0;
+  auto dfs = Dfs(map);
+
+  // yes, I could probably generalize this, but I don't care now
+  for (size_t i = 0; i < size; ++i) {
+    dfs.reset();
+    dfs.run(i, 0, Direction::RIGHT);
+    maxVisited = std::max(maxVisited, dfs.visited());
+
+    dfs.reset();
+    dfs.run(i, size - 1, Direction::LEFT);
+    maxVisited = std::max(maxVisited, dfs.visited());
+
+    dfs.reset();
+    dfs.run(0, i, Direction::BOTTOM);
+    maxVisited = std::max(maxVisited, dfs.visited());
+
+    dfs.reset();
+    dfs.run(size - 1, i, Direction::TOP);
+    maxVisited = std::max(maxVisited, dfs.visited());
+  }
+  return maxVisited;
 }
 
 int main() {
@@ -180,4 +215,6 @@ int main() {
   std::string fileProd = "input_prod.txt";
   assert(part01(fileTest) == 46);
   std::cout << "Part 01: " << part01(fileProd) << std::endl;
+  assert(part02Naive(fileTest) == 51);
+  std::cout << "Part 02: " << part02Naive(fileProd) << std::endl;
 }
