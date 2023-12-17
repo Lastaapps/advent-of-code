@@ -35,7 +35,8 @@ First 7 days were chosen bye the wheel of fortune.
 - [day13](src/main/kotlin/y2023/day13/Main.kt) (Kotlin)
 - [day14](src/main/kotlin/y2023/day14/Main.kt) (Kotlin)
 - [day15](src/main/kotlin/y2023/day15/Main.kt) (Kotlin)
-- [day16](src/main/kotlin/y2023/day16/day16.cpp) (C++)
+- [day16](src/main/kotlin/y2023/day16/day16.cpp) (C++) [DFS]
+- [day17](src/main/kotlin/y2023/day17/day17.cpp) (C++) [Dijkstra]
 
 ### 2022
 All the code is written in Kotlin.
