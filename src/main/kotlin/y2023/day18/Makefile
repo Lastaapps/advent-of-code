@@ -1,6 +1,6 @@
 GCC = g++
-GCC_OPTIONS = -Wall -pedantic -g3 -fsanitize=address -ftrapv -Wstrict-overflow
-# GCC_OPTIONS = -Wall -pedantic -Ofast
+# GCC_OPTIONS = -Wall -pedantic -g3 -fsanitize=address -ftrapv -Wstrict-overflow
+GCC_OPTIONS = -Wall -pedantic -Ofast
 
 .PHONY: run day18
 .DEFAULT_GOAL: run

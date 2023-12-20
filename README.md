@@ -37,6 +37,7 @@ First 7 days were chosen bye the wheel of fortune.
 - [day15](src/main/kotlin/y2023/day15/Main.kt) (Kotlin)
 - [day16](src/main/kotlin/y2023/day16/day16.cpp) (C++) [DFS]
 - [day17](src/main/kotlin/y2023/day17/day17.cpp) (C++) [Dijkstra]
+- [day18](src/main/kotlin/y2023/day18/day18.cpp) (C++) [Grid polygon area]
 
 ### 2022
 All the code is written in Kotlin.
