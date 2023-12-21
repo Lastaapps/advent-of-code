@@ -3,6 +3,7 @@ package y2023.day19
 import InputLoader
 import Year
 import io.kotest.matchers.shouldBe
+import kotlin.math.min
 
 private data class Command(
     val index: Int,
@@ -86,7 +87,55 @@ private fun String.part01(): Int {
     }
 }
 
-private fun String.part02(): Int = PART_02_TEST
+private fun String.part02(): Long {
+    val (commandsMap, translate, _) = parseInput()
+
+    val queue = mutableListOf(translate["in"]!! to mutableListOf(1..4000, 1..4000, 1..4000, 1..4000))
+    var sum = 0L
+
+    while (queue.isNotEmpty()) {
+        val (node, ranges) = queue.removeLast()
+
+        if (node < 0) {
+            if (node == ACCEPTED) {
+                sum += ranges.fold(1L) { acu, range -> acu * (range.last - range.first + 1) }
+            }
+            continue
+        }
+
+        val commands = commandsMap[node]
+        commands.let { it.subList(0, it.lastIndex) }
+            .forEach { command ->
+                val range = ranges[command.index]
+
+                val forkItem: IntRange
+                val newItem: IntRange
+
+//                if ((command.threshold + if (command.gt) 1 else -1) !in range) {
+//                    return@forEach
+//                }
+
+                if (command.gt) {
+                    forkItem = (command.threshold + 1)..range.last
+                    newItem = range.first..command.threshold
+                } else {
+                    forkItem = range.first..<command.threshold
+                    newItem = command.threshold..range.last
+                }
+
+                // if (!forkItem.isEmpty()) {
+                queue += translate[command.goto]!! to ranges.toMutableList().also { it[command.index] = forkItem }
+                // }
+
+                ranges[command.index] = newItem
+            }
+
+        val lastCommand = commands.last()
+        queue += translate[lastCommand.goto]!! to ranges
+    }
+
+    return sum
+}
 
 fun main() {
     testInput.part01() shouldBe PART_01_TEST
@@ -123,5 +172,5 @@ hdj{m>838:A,pv}
 
 private const val PART_01_TEST = 19114
 private const val PART_01_PROD = 449531
-private const val PART_02_TEST = 0
-private const val PART_02_PROD = 0
+private const val PART_02_TEST = 167409079868000L
+private const val PART_02_PROD = 122756210763577L
