@@ -18,7 +18,7 @@
 // yes, I should use more templates to make this faster, but this is safer
 template <typename Key, typename Value>
 Value getOrPut(std::unordered_map<Key, Value> &map, const Key &key,
-               std::function<Value()> value) {
+               std::function<Value()> value) noexcept {
   auto entry = map.find(key);
   if (entry != map.end()) {
     return entry->second;
@@ -54,7 +54,7 @@ enum class Level {
 // ----------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------
-Level constexpr otherLevel(const Level l) {
+Level constexpr otherLevel(const Level l) noexcept {
   return static_cast<Level>(l == Level::LOW);
 }
 std::ostream &operator<<(std::ostream &out, const Level &level) {
@@ -89,7 +89,7 @@ protected:
   Node(Id id, std::vector<Id> &&targets)
       : id(id), targets(std::move(targets)) {}
 
-  void sendToAll(NetworkState &state, const Level l) {
+  void sendToAll(NetworkState &state, const Level l) noexcept {
     for (const auto &target : targets) {
       state.queue.emplace(Signal{id, target, l});
     }
@@ -98,7 +98,9 @@ protected:
   virtual std::string name() const { return "Node"; }
 
 public:
-  virtual void process(NetworkState &state, const Signal &&signal) {}
+  virtual bool process(NetworkState &state, const Signal &&signal) noexcept {
+    return false;
+  }
 
   friend std::ostream &operator<<(std::ostream &out, const Node &node);
 };
@@ -114,8 +116,9 @@ public:
   Broadcast(Id id, std::vector<Id> &&targets) : Node(id, std::move(targets)) {}
   std::string name() const override { return "Broadcast"; }
 
-  void process(NetworkState &state, const Signal &&signal) override {
+  bool process(NetworkState &state, const Signal &&signal) noexcept override {
     sendToAll(state, Level::LOW);
+    return false;
   };
 };
 // ----------------------------------------------------------------------------
@@ -128,15 +131,16 @@ public:
   FlipFlop(Id id, std::vector<Id> &&targets) : Node(id, std::move(targets)) {}
   std::string name() const override { return "FlipFlop"; }
 
-  void process(NetworkState &state, const Signal &&signal) override {
+  bool process(NetworkState &state, const Signal &&signal) noexcept override {
     if (signal.level == Level::HIGH) {
-      return;
+      return false;
     }
     local = otherLevel(local);
     state.charge +=
         static_cast<int8_t>(local) - static_cast<int8_t>(otherLevel(local));
 
     sendToAll(state, local);
+    return false;
   };
 };
 // ----------------------------------------------------------------------------
@@ -151,7 +155,7 @@ public:
       : Node(id, std::move(targets)) {}
   std::string name() const override { return "Conjunction"; }
 
-  void process(NetworkState &state, const Signal &&signal) override {
+  bool process(NetworkState &state, const Signal &&signal) noexcept override {
     const Level stored = levels.find(signal.from)->second;
     const Level input = signal.level;
     if (input != stored) {
@@ -163,30 +167,35 @@ public:
     }
 
     sendToAll(state, levelsOn == levels.size() ? Level::LOW : Level::HIGH);
+    return false;
   };
 
-  void registerInRef(Id from) {
+  void registerInRef(Id from) noexcept {
     levels.emplace(std::make_pair(from, Level::LOW));
   }
 };
 // ----------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------
-class Dummy final : public Node {
+class Output final : public Node {
 
 public:
-  Dummy() : Node(-1, std::vector<Id>{}) {}
-  std::string name() const override { return "Dummy"; }
+  Output() : Node(-1, std::vector<Id>{}) {}
+  Output(Id id) : Node(id, std::vector<Id>{}) {}
+  std::string name() const override { return "Output"; }
 
-  void process(NetworkState &state, const Signal &&signal) override{};
+  bool process(NetworkState &state, const Signal &&signal) noexcept override {
+    return signal.level == Level::LOW;
+  };
 };
 // ----------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------
-using NodeVariant = std::variant<Dummy, Broadcast, FlipFlop, Conjunction>;
-std::ostream &operator<<(std::ostream &out, const NodeVariant &target) {
-  if (std::holds_alternative<Dummy>(target)) {
-    return out << std::get<Dummy>(target);
+using NodeVariant = std::variant<Output, Broadcast, FlipFlop, Conjunction>;
+std::ostream &operator<<(std::ostream &out,
+                         const NodeVariant &target) noexcept {
+  if (std::holds_alternative<Output>(target)) {
+    return out << std::get<Output>(target);
   } else if (std::holds_alternative<Broadcast>(target)) {
     return out << std::get<Broadcast>(target);
   } else if (std::holds_alternative<FlipFlop>(target)) {
@@ -194,7 +203,7 @@ std::ostream &operator<<(std::ostream &out, const NodeVariant &target) {
   } else if (std::holds_alternative<Conjunction>(target)) {
     return out << std::get<Conjunction>(target);
   } else {
-    return out;
+    exit(1);
   }
 }
 // ----------------------------------------------------------------------------
@@ -204,6 +213,7 @@ std::vector<NodeVariant> parseInput(std::istream &in) {
   Id nextId = 0;
 
   translate.emplace(std::make_pair("broadcaster", nextId++));
+  translate.emplace(std::make_pair("rx", nextId++));
   std::vector<NodeVariant> data;
 
   while (in) {
@@ -258,9 +268,9 @@ std::vector<NodeVariant> parseInput(std::istream &in) {
   for (NodeVariant &target : data) {
     Id id;
     std::vector<Id> *targets;
-    if (std::holds_alternative<Dummy>(target)) {
-      id = std::get<Dummy>(target).id;
-      targets = &std::get<Dummy>(target).targets;
+    if (std::holds_alternative<Output>(target)) {
+      id = std::get<Output>(target).id;
+      targets = &std::get<Output>(target).targets;
     } else if (std::holds_alternative<Broadcast>(target)) {
       id = std::get<Broadcast>(target).id;
       targets = &std::get<Broadcast>(target).targets;
@@ -270,6 +280,8 @@ std::vector<NodeVariant> parseInput(std::istream &in) {
     } else if (std::holds_alternative<Conjunction>(target)) {
       id = std::get<Conjunction>(target).id;
       targets = &std::get<Conjunction>(target).targets;
+    } else {
+      exit(1);
     }
 
     for (auto index : *targets) {
@@ -296,8 +308,9 @@ public:
   Logistics(std::vector<NodeVariant> &&data) : data(data) {}
 
 private:
-  void iteratrion() {
+  bool iteratrion() noexcept {
     state.queue.push(Signal{static_cast<Id>(-1), 0});
+    bool outputFound = false;
 
     while (!state.queue.empty()) {
       const Signal signal = state.queue.front();
@@ -310,22 +323,28 @@ private:
 
       NodeVariant &target = data[signal.to];
 
-      if (std::holds_alternative<Dummy>(target)) {
-        std::get<Dummy>(target).process(state, std::move(signal));
+      if (std::holds_alternative<Output>(target)) {
+        outputFound |=
+            std::get<Output>(target).process(state, std::move(signal));
       } else if (std::holds_alternative<Broadcast>(target)) {
+        // outputFound |=
         std::get<Broadcast>(target).process(state, std::move(signal));
       } else if (std::holds_alternative<FlipFlop>(target)) {
+        // outputFound |=
         std::get<FlipFlop>(target).process(state, std::move(signal));
       } else if (std::holds_alternative<Conjunction>(target)) {
+        // outputFound |=
         std::get<Conjunction>(target).process(state, std::move(signal));
+      } else {
+        exit(1);
       }
     }
+    return outputFound;
   }
 
 public:
-  size_t run(size_t cycles = 1'000) {
+  size_t runCycles(size_t cycles = 1'000) noexcept {
     do {
-      // std::cout << "Iteration " << history.size() << ", charge " << state.charge << '\n';
       state.used = 0;
       iteratrion();
       history.push_back(state.used);
@@ -339,13 +358,23 @@ public:
     }
     return base.real() * base.imag();
   }
+
+  size_t findOutput() noexcept {
+    size_t presses = 1;
+    for (; !iteratrion(); ++presses) {
+    }
+    return presses;
+  }
 };
 
 size_t part01(const std::string &filename) {
   auto input = parseInputFromFile(filename);
-  // std::cout << "Input " << input << std::endl;
+  return Logistics(std::move(input)).runCycles();
+}
 
-  return Logistics(std::move(input)).run();
+size_t part02(const std::string &filename) {
+  auto input = parseInputFromFile(filename);
+  return Logistics(std::move(input)).findOutput();
 }
 
 int main() {
@@ -358,6 +387,10 @@ int main() {
   const size_t part01Res = part01(fileProd);
   std::cout << "Part 01: " << part01Res << std::endl;
   assert(part01Res == 866435264);
+
+  const size_t part02Res = part02(fileProd);
+  std::cout << "Part 02: " << part02Res << std::endl;
+  assert(part02Res == 0);
 
   return 0;
 }
