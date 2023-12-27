@@ -1,5 +1,8 @@
 use regex::Regex;
-use std::fs;
+use std::{
+    collections::VecDeque,
+    fs,
+};
 
 type Point = (u32, u32, u32);
 
@@ -35,18 +38,21 @@ fn read_input(file_path: &str) -> Vec<Cube> {
         .collect()
 }
 
-fn part01(file_path: &str) -> usize {
+fn solve(file_path: &str) -> (usize, usize) {
     let mut cubes = read_input(file_path);
     cubes.sort_by(|a, b| a.from.2.cmp(&b.from.2));
 
     let mut needed = vec![false; cubes.len()];
     let mut spots = vec![vec![(u32::MAX, 0u32); 10]; 10];
+    let mut supports = vec![Vec::new(); cubes.len()];
+    let mut supported = vec![Vec::new(); cubes.len()];
 
     cubes.iter().enumerate().for_each(|(cube_id, cube)| {
+        let cube_id = cube_id as u32;
         let (first_id_on_height, mut max_height) =
             spots[cube.from.0 as usize][cube.from.1 as usize];
 
-        let mut cubes_holding = Some(first_id_on_height);
+        let mut cubes_holding = vec![first_id_on_height];
 
         for x in cube.from.0..(cube.to.0 + 1) {
             for y in cube.from.1..(cube.to.1 + 1) {
@@ -54,19 +60,28 @@ fn part01(file_path: &str) -> usize {
 
                 if height > max_height {
                     max_height = height;
-                    cubes_holding = Some(id);
+                    cubes_holding.clear();
+                    cubes_holding.push(id);
                 } else if height == max_height {
-                    if id != cubes_holding.unwrap_or(u32::MAX) {
-                        cubes_holding = None;
+                    if !cubes_holding.contains(&id) {
+                        cubes_holding.push(id);
                     }
                 }
             }
         }
 
-        match cubes_holding {
-            Some(u32::MAX) => {}
-            Some(id) => needed[id as usize] = true,
-            None => {}
+        match cubes_holding[..] {
+            [u32::MAX] => {}
+            [_, ..] => {
+                if cubes_holding.len() == 1 {
+                    needed[cubes_holding[0] as usize] = true;
+                }
+                for id in cubes_holding.iter() {
+                    supports[*id as usize].push(cube_id);
+                }
+                supported[cube_id as usize] = cubes_holding
+            }
+            [] => {}
         }
 
         let new_heigh = max_height + cube.to.2 - cube.from.2 + 1;
@@ -77,12 +92,57 @@ fn part01(file_path: &str) -> usize {
         }
     });
 
-    needed.iter().filter(|it| !*it).count()
+    let part01_res = needed.iter().filter(|it| !*it).count();
+
+    // does not provide noticeable performance boost (even little slower)
+    let to_break = needed
+        .iter()
+        .enumerate()
+        .filter(|(_, it)| **it)
+        .map(|(index, _)| index as u32);
+    // let to_break = 0..(cubes.len());
+
+    let part02_res = to_break
+        .map(|cube_id| {
+            let mut colapsed_cubes = 0;
+            // not faster than Vec for this data
+            let mut queue: VecDeque<u32> = VecDeque::with_capacity(32);
+            // 2x faster than using a HashSet with open addressing
+            let mut poped = vec![false; cubes.len()];
+
+            queue.append(&mut supports[cube_id as usize].clone().into());
+            poped[cube_id as usize] = true;
+
+            while !queue.is_empty() {
+                let next_id = queue.pop_front().unwrap();
+                if poped[next_id as usize] { continue; }
+
+                // check if all the supporting nodes are popped
+                if supported[next_id as usize]
+                    .iter()
+                    .any(|it| !poped[*it as usize])
+                {
+                    continue;
+                }
+
+                // I should check if the item was already added
+                // on the other hand only 6% loop iteration are caused by this
+                queue.append(&mut supports[next_id as usize].clone().into());
+                poped[next_id as usize] = true;
+                colapsed_cubes += 1;
+            }
+
+            colapsed_cubes
+        })
+        .sum();
+
+    (part01_res, part02_res)
 }
 
 fn main() {
-    assert_eq!(part01("./input_test.txt"), 5);
-    let part01_res = part01("./input_prod.txt");
-    println!("Part 01: {}", part01_res);
-    assert_eq!(part01_res, 463);
+    assert_eq!(solve("./input_test.txt"), (5, 7));
+    let solution = solve("./input_prod.txt");
+    println!("Part 01: {}", solution.0);
+    println!("Part 02: {}", solution.1);
+    assert_eq!(solution, (463, 89727));
 }
