@@ -111,14 +111,18 @@ impl Traveler {
     }
 }
 
-fn neighbours(map: &Map, point: &Point) -> Vec<(u32, u32)> {
-    let iter = match map.get(point) {
-        Tile::Ground => [(1, 0), (-1, 0), (0, 1), (0, -1)].iter(),
-        Tile::Forest => [].iter(),
-        Tile::Left => [(-1, 0)].iter(),
-        Tile::Right => [(1, 0)].iter(),
-        Tile::Up => [(0, -1)].iter(),
-        Tile::Down => [(0i32, 1i32)].iter(),
+fn neighbours(map: &Map, point: &Point, ignore_hikes: bool) -> Vec<(u32, u32)> {
+    let iter = if ignore_hikes {
+        [(1, 0), (-1, 0), (0, 1), (0, -1)].iter()
+    } else {
+        match map.get(point) {
+            Tile::Ground => [(1, 0), (-1, 0), (0, 1), (0, -1)].iter(),
+            Tile::Forest => [].iter(),
+            Tile::Left => [(-1, 0)].iter(),
+            Tile::Right => [(1, 0)].iter(),
+            Tile::Up => [(0, -1)].iter(),
+            Tile::Down => [(0i32, 1i32)].iter(),
+        }
     };
     iter.map(|offset| {
         (
@@ -129,7 +133,14 @@ fn neighbours(map: &Map, point: &Point) -> Vec<(u32, u32)> {
     .collect()
 }
 
-fn seach_path(map: &Map, traveler: &mut Traveler, point: &Point, end: &Point, distance: u32) {
+fn seach_path(
+    map: &Map,
+    traveler: &mut Traveler,
+    point: &Point,
+    end: &Point,
+    ignore_hikes: bool,
+    distance: u32,
+) {
     if map.get(point) == Tile::Forest || traveler.is_visited(point) {
         return;
     }
@@ -141,25 +152,32 @@ fn seach_path(map: &Map, traveler: &mut Traveler, point: &Point, end: &Point, di
         return;
     }
 
-    neighbours(map, point)
+    neighbours(map, point, ignore_hikes)
         .iter()
-        .for_each(|neighbour| seach_path(map, traveler, neighbour, end, distance + 1));
+        .for_each(|neighbour| {
+            seach_path(map, traveler, neighbour, end, ignore_hikes, distance + 1)
+        });
 
     traveler.unvisit(point);
 }
 
-fn part01(file_path: &str) -> u32 {
+fn solve_grid(file_path: &str, ignore_hikes: bool) -> u32 {
     let (map, start, end) = read_input(file_path);
     let mut traveler = Traveler::new(map.size);
 
-    seach_path(&map, &mut traveler, &start, &end, 0);
+    seach_path(&map, &mut traveler, &start, &end, ignore_hikes, 0);
 
     traveler.get_distance(&end) + 2
 }
 
 fn main() {
-    assert_eq!(part01("./input_test.txt"), 94);
-    let part01_res = part01("./input_prod.txt");
+    assert_eq!(solve_grid("./input_test.txt", false), 94);
+    let part01_res = solve_grid("./input_prod.txt", false);
     println!("Part 01: {}", part01_res);
     assert_eq!(part01_res, 2110);
+
+    assert_eq!(solve_grid("./input_test.txt", true), 154);
+    let part02_res = solve_grid("./input_prod.txt", true);
+    println!("Part 02: {}", part02_res);
+    assert_eq!(part02_res, 6514);
 }

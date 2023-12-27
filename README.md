@@ -42,6 +42,7 @@ First 7 days were chosen bye the wheel of fortune.
 - [day20](src/main/kotlin/y2023/day20/day20.cpp) (C++) *Part 01 only*
 - [day21](src/main/kotlin/y2023/day21/src/main.rs) (Rust)
 - [day22](src/main/kotlin/y2023/day22/src/main.rs) (Rust)
+- [day23](src/main/kotlin/y2023/day23/src/main.rs) (Rust) [Longest path]
 
 ### 2022
 All the code is written in Kotlin.
