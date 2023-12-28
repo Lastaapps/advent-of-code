@@ -1,6 +1,6 @@
 use std::fs;
 
-use nalgebra::{Matrix3x4, Vector3};
+use nalgebra::{Matrix3x4, Vector3, Matrix};
 use regex::Regex;
 
 type Vector = Vector3<i64>;
@@ -77,7 +77,7 @@ fn part01(file_path: &str, region: (i64, i64)) -> usize {
                 }
             };
 
-            if (0..boundary).contains(&coord.x) && (0..boundary).contains(&coord.y) {
+            if (0..boundary).contains(&(coord.x as i64)) && (0..boundary).contains(&(coord.y as i64)) {
                 colisions += 1;
             }
         }
@@ -87,7 +87,7 @@ fn part01(file_path: &str, region: (i64, i64)) -> usize {
 }
 
 fn are_paralel(h1: &Hail, h2: &Hail) -> bool {
-    h1.v.cross(&h2.v) == Vector::new(0, 0, 0)
+    h1.v.cross(&h2.v) == Vector::zeros()
 }
 
 fn colide3d_check(h1: &Hail, h2: &Hail) -> bool {
@@ -117,23 +117,16 @@ fn find_scale(
     c_pos: Vector,
     c_vec: Vector,
 ) -> i64 {
-    let _ = b_vec;
-    let mut matrix = Matrix3x4::from_columns(&[a_vec, b_pos - a_pos, -c_vec, c_pos - a_pos]);
-    // let mut matrix = Matrix3x4::from_columns(&[a_vec, b_vec, -c_vec, c_pos - a_pos]);
-    let (height, width) = matrix.shape();
+    let _ = a_vec;
 
-    for i in 0..(height - 1) {
-        let base = matrix.row(i).column(i).x;
-        if base == 0 {
-            panic!("To complex, sorry...");
-        }
-        for j in (i + 1)..height {
-            let local = matrix.row(j).column(i).x;
-            matrix.set_row(j, &(local * matrix.row(i) + -1 * base * matrix.row(j)));
-        }
+    fn to128(vec: Vector) -> Vector3<i128>{
+        Vector3::new(vec.x as i128, vec.y as i128, vec.z as i128)
     }
 
-    fn gcd(mut n: i64, mut m: i64) -> i64 {
+    let mut matrix: Matrix<i128, _, _, _> = Matrix3x4::from_columns(&[to128(b_vec), to128(b_pos - a_pos), to128(-c_vec), to128(c_pos - b_pos)]);
+    let (height, width) = matrix.shape();
+
+    fn gcd(mut n: i128, mut m: i128) -> i128 {
         while m != 0 {
             if m < n {
                 std::mem::swap(&mut m, &mut n);
@@ -143,8 +136,23 @@ fn find_scale(
         n
     }
 
-    // redundant for this use case
+    for i in 0..(height - 1) {
+        // println!("{}", matrix);
+
+        let base = matrix.row(i).column(i).x;
+        if base == 0 {
+            panic!("To complex, sorry...");
+        }
+        for j in (i + 1)..height {
+            let local = matrix.row(j).column(i).x;
+            matrix.set_row(j, &(matrix.row(i) * local as i128 + matrix.row(j) * -1 * base));
+        }
+    }
+
+    // redundant for this use case, but cool
     for i in 0..height {
+        // println!("{}", matrix);
+
         let i = height - i - 1;
 
         let base = matrix.row(i).column(i).x;
@@ -154,17 +162,26 @@ fn find_scale(
 
         for j in 0..i {
             let local = matrix.row(j).column(i).x;
-            matrix.set_row(j, &(local * matrix.row(i) + -1 * base * matrix.row(j)));
+            matrix.set_row(j, &(matrix.row(i) * local + matrix.row(j) * -1 * base));
         }
 
         // normalize
-        let base_row = matrix.row(i);
-        let gcd = base_row.iter().filter(|it| **it != 0).map(|it| it.abs()).reduce(|acu, it| gcd(acu, it)).unwrap();
-        matrix.set_row(i, &(base_row / gcd * base.signum()));
+        matrix.row_iter_mut().enumerate().take(i + 1).for_each(|(index, mut row)| {
+            let base = row.column(index).x;
+            let gcd = row
+                .iter()
+                .filter(|it| **it != 0)
+                .map(|it| it.abs())
+                .reduce(|acu, it| gcd(acu, it))
+                .unwrap();
+            row /= gcd;
+            row *= base.signum();
+        });
     }
+    // println!("{}", matrix);
 
     let last_row = matrix.row(height - 1);
-    last_row.column(width - 1).x / last_row.column(width - 2).x
+    (last_row.column(width - 1).x / last_row.column(width - 2).x) as i64
 }
 
 // h1, h2 - in the same plane
@@ -172,7 +189,7 @@ fn find_scale(
 fn find_non_parallel(hails: &Vec<Hail>) -> ((Hail, Hail), (Hail, Hail)) {
     let mut one_plane = None;
 
-    'parent: for i in 1..hails.len() {
+    'parent: for i in 0..hails.len() {
         for j in (i + 1)..hails.len() {
             let h1 = &hails[i];
             let h2 = &hails[j];
@@ -191,7 +208,7 @@ fn find_non_parallel(hails: &Vec<Hail>) -> ((Hail, Hail), (Hail, Hail)) {
 
     let mut iter = hails
         .iter()
-        .filter(|hail| !are_paralel(hail, &in_one_plane.0))
+        .filter(|hail| !(are_paralel(hail, &in_one_plane.0) && are_paralel(hail, &in_one_plane.1)))
         .take(2);
     let crossing = (*iter.next().unwrap(), *iter.next().unwrap());
 
@@ -201,19 +218,38 @@ fn find_non_parallel(hails: &Vec<Hail>) -> ((Hail, Hail), (Hail, Hail)) {
 fn part02(file_path: &str) -> i64 {
     let hails: Vec<_> = read_input(file_path);
 
+    let hail0 = hails[0];
+    // let hail0 = Hail {p: Vector::zeros(), v: Vector::zeros()};
+
+    // I got inspired from Reddit here with the trick to subtract
+    // one of the hails. Because of that I did not need two hails in the same
+    // plane anymore. The only problem after were the overflows in GEM,
+    // solved with i128 (not nice, but works).
+    let hails = hails
+        .into_iter()
+        .map(|hail| Hail {
+            p: hail.p - hail0.p,
+            v: hail.v - hail0.v,
+        })
+        .collect();
+
     // h1, h2 -> form a plane
     // h3, h4 -> intersections
     let ((h1, h2), (h3, h4)) = find_non_parallel(&hails);
 
-    let r = find_scale(h2.p, h2.v, h1.p, h1.v, h3.p, h3.v);
+    let r = find_scale(h1.p, h1.v, h2.p, h2.v, h3.p, h3.v);
     let c = h3.p + h3.v * r;
     let o = find_scale(h1.p, h1.v, h2.p, h2.v, h4.p, h4.v);
     let d = h4.p + h4.v * o;
 
     let x_vel = (c - d) / (r - o);
-    let x_pos = c - r * x_vel;
+    let x_pos = c - x_vel * r;
+
+    let x_pos = x_pos + hail0.p;
+    let x_vel = x_vel + hail0.v;
+
     println!("{:?} -> {:?}", x_pos, x_vel);
-    x_pos.sum()
+    x_pos.sum() as i64
 }
 
 fn main() {
@@ -225,5 +261,5 @@ fn main() {
     assert_eq!(part02("./input_test.txt"), 47);
     let part02_res = part02("./input_prod.txt");
     println!("Part 02: {}", part02_res);
-    assert_eq!(part02_res, 0);
+    assert_eq!(part02_res, 606772018765659);
 }
