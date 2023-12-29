@@ -6,22 +6,23 @@
 #include <iostream>
 #include <istream>
 #include <queue>
-#include <unordered_map>
 #include <vector>
+#include <ext/pb_ds/assoc_container.hpp>
 
 using Id = size_t;
 using Graph = std::vector<std::vector<Id>>;
+using namespace __gnu_pbds;
 
 // yes, I should use more templates to make this faster, but this is safer
 template <typename Key, typename Value>
-Value getOrPut(std::unordered_map<Key, Value> &map, const Key &key,
+Value getOrPut(gp_hash_table<Key, Value> &map, const Key &key,
                std::function<Value()> value) noexcept {
   auto entry = map.find(key);
   if (entry != map.end()) {
     return entry->second;
   } else {
     Value newVal = value();
-    map.emplace(std::make_pair(key, newVal));
+    map.insert(std::make_pair(key, newVal));
     return newVal;
   }
 }
@@ -42,8 +43,7 @@ std::ostream &operator<<(std::ostream &out, const std::vector<T> &data) {
 }
 
 Graph parseInput(std::istream &in) {
-  // TODO GNU maps
-  std::unordered_map<std::string, Id> translate;
+  gp_hash_table<std::string, Id> translate;
   Id nextId = 0;
 
   Graph graph;
@@ -117,7 +117,6 @@ void backtrack(const std::vector<Id> &predecesors, Flow &flow, Id u) {
 }
 
 bool fordFulkerson(const Graph &graph, Flow &flow, Id from, Id to) {
-  // TODO GNU
   std::queue<Id> queue{};
   auto predecesors = std::vector<Id>(graph.size(), Id(-1));
   queue.emplace(from);
@@ -203,8 +202,6 @@ size_t part01(const std::string &filename) {
   return 0;
 }
 
-size_t part02(const std::string &filename) { return 0; }
-
 int main() {
   std::string fileTest = "input_test.txt";
   std::string fileProd = "input_prod.txt";
@@ -213,11 +210,6 @@ int main() {
   const size_t part01Res = part01(fileProd);
   std::cout << "Part 01: " << part01Res << std::endl;
   assert(part01Res == 613870);
-
-  assert(part02(fileTest) == 0);
-  const size_t part02Res = part02(fileProd);
-  std::cout << "Part 02: " << part02Res << std::endl;
-  assert(part02Res == 0);
 
   return 0;
 }

@@ -44,6 +44,7 @@ First 7 days were chosen bye the wheel of fortune.
 - [day22](src/main/kotlin/y2023/day22/src/main.rs) (Rust)
 - [day23](src/main/kotlin/y2023/day23/src/main.rs) (Rust) [Longest path]
 - [day24](src/main/kotlin/y2023/day24/src/main.rs) (Rust) [Advanced linear algebra] /small help from Reddit/
+- [day25](src/main/kotlin/y2023/day25/day25.cpp) (C++) [Network flows, Ford Fulkerson]
 
 ### 2022
 All the code is written in Kotlin.
