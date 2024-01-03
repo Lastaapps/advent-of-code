@@ -14,6 +14,19 @@
 #include <variant>
 #include <vector>
 
+/******************************************************************************
+ *      Disclaimer
+ *      I'm not proud of this code
+ *      I designed it wrong, played with std::variant in a bad way
+ *      And the forgot about some requirements
+ *      So yes, this is mass.
+ *****************************************************************************/
+
+
+
+
+
+
 // ----------------------------------------------------------------------------
 // yes, I should use more templates to make this faster, but this is safer
 template <typename Key, typename Value>
@@ -77,6 +90,12 @@ struct NetworkState final {
   std::queue<Signal> queue{};
   std::complex<uint64_t> used = 0;
   uint64_t charge = 0;
+  uint64_t roundNo = 0;
+  std::vector<std::pair<Id, uint64_t>> reported;
+
+  void reportHigh(Id id) {
+    reported.emplace_back(std::make_pair(id, roundNo));
+  }
 };
 // ----------------------------------------------------------------------------
 
@@ -149,6 +168,7 @@ public:
 class Conjunction final : public Node {
   std::unordered_map<Id, Level> levels{};
   uint16_t levelsOn = 0;
+  bool worthRemembering = false;
 
 public:
   Conjunction(Id id, std::vector<Id> &&targets)
@@ -166,12 +186,21 @@ public:
       levels[signal.from] = input;
     }
 
-    sendToAll(state, levelsOn == levels.size() ? Level::LOW : Level::HIGH);
+    const Level output = levelsOn == levels.size() ? Level::LOW : Level::HIGH;
+    if (output == Level::HIGH && worthRemembering) {
+      state.reportHigh(id);
+      worthRemembering = false;
+    }
+    sendToAll(state, output);
     return false;
   };
 
   void registerInRef(Id from) noexcept {
     levels.emplace(std::make_pair(from, Level::LOW));
+  }
+
+  void markSignificant() noexcept {
+    worthRemembering = true;
   }
 };
 // ----------------------------------------------------------------------------
@@ -185,6 +214,7 @@ public:
   std::string name() const override { return "Output"; }
 
   bool process(NetworkState &state, const Signal &&signal) noexcept override {
+    sendToAll(state, signal.level);
     return signal.level == Level::LOW;
   };
 };
@@ -208,7 +238,7 @@ std::ostream &operator<<(std::ostream &out,
 }
 // ----------------------------------------------------------------------------
 
-std::vector<NodeVariant> parseInput(std::istream &in) {
+std::vector<NodeVariant> parseInput(std::istream &in, const std::initializer_list<std::string>& significant) {
   std::unordered_map<std::string, Id> translate;
   Id nextId = 0;
 
@@ -292,11 +322,18 @@ std::vector<NodeVariant> parseInput(std::istream &in) {
     }
   }
 
+  for (auto name : significant) {
+      auto &dest = data[translate[name]];
+      if (std::holds_alternative<Conjunction>(dest)) {
+        std::get<Conjunction>(dest).markSignificant();
+      }
+  }
+
   return data;
 }
-std::vector<NodeVariant> parseInputFromFile(const std::string &filename) {
+std::vector<NodeVariant> parseInputFromFile(const std::string &filename, const std::initializer_list<std::string>& significant) {
   auto stream = std::ifstream(filename);
-  return parseInput(stream);
+  return parseInput(stream, significant);
 }
 
 class Logistics final {
@@ -308,9 +345,8 @@ public:
   Logistics(std::vector<NodeVariant> &&data) : data(data) {}
 
 private:
-  bool iteratrion() noexcept {
+  void iteratrion() noexcept {
     state.queue.push(Signal{static_cast<Id>(-1), 0});
-    bool outputFound = false;
 
     while (!state.queue.empty()) {
       const Signal signal = state.queue.front();
@@ -324,22 +360,17 @@ private:
       NodeVariant &target = data[signal.to];
 
       if (std::holds_alternative<Output>(target)) {
-        outputFound |=
-            std::get<Output>(target).process(state, std::move(signal));
+        std::get<Output>(target).process(state, std::move(signal));
       } else if (std::holds_alternative<Broadcast>(target)) {
-        // outputFound |=
         std::get<Broadcast>(target).process(state, std::move(signal));
       } else if (std::holds_alternative<FlipFlop>(target)) {
-        // outputFound |=
         std::get<FlipFlop>(target).process(state, std::move(signal));
       } else if (std::holds_alternative<Conjunction>(target)) {
-        // outputFound |=
         std::get<Conjunction>(target).process(state, std::move(signal));
       } else {
         exit(1);
       }
     }
-    return outputFound;
   }
 
 public:
@@ -360,20 +391,29 @@ public:
   }
 
   size_t findOutput() noexcept {
-    size_t presses = 1;
-    for (; !iteratrion(); ++presses) {
+    auto &roundNo = state.roundNo;
+    roundNo = 1;
+    for (; roundNo < 10'000; ++roundNo) {
+      iteratrion();
     }
-    return presses;
+
+    size_t lcm = 1;
+    for (auto record : state.reported) {
+      // std::cout << record.first << " -> " << record.second << std::endl;
+      lcm = std::lcm(lcm, record.second);
+    }
+    
+    return lcm;
   }
 };
 
 size_t part01(const std::string &filename) {
-  auto input = parseInputFromFile(filename);
+  auto input = parseInputFromFile(filename, {});
   return Logistics(std::move(input)).runCycles();
 }
 
-size_t part02(const std::string &filename) {
-  auto input = parseInputFromFile(filename);
+size_t part02(const std::string &filename, const std::initializer_list<std::string>& significant) {
+  auto input = parseInputFromFile(filename, significant);
   return Logistics(std::move(input)).findOutput();
 }
 
@@ -388,9 +428,9 @@ int main() {
   std::cout << "Part 01: " << part01Res << std::endl;
   assert(part01Res == 866435264);
 
-  const size_t part02Res = part02(fileProd);
+  const size_t part02Res = part02(fileProd, {"lk", "zv", "sp", "xt"});
   std::cout << "Part 02: " << part02Res << std::endl;
-  assert(part02Res == 0);
+  assert(part02Res == 229215609826339);
 
   return 0;
 }

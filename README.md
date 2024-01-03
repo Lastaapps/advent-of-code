@@ -20,6 +20,8 @@ No AI tools were used during the development!
 ### 2023
 
 First 7 days were chosen bye the wheel of fortune.
+Unless stated otherwise all the code was written
+without "consulting with internet communities".
 - [day01](src/main/kotlin/y2023/day01.rkt) (Racket)
 - [day02](src/main/kotlin/y2023/day02.asm) (RISC-V ASM)
 - [day03](src/main/kotlin/y2023/day03/day03.hc) ([Holy C](https://rosettacode.org/wiki/Category:HolyC))
@@ -27,7 +29,7 @@ First 7 days were chosen bye the wheel of fortune.
 - [day05](src/main/kotlin/y2023/day05.py) (Python)
 - [day06](src/main/kotlin/y2023/day06/day06.go) (Go)
 - [day07](src/main/kotlin/y2023/day07/day07.cob) (COBOL and Python)
-- [day08](src/main/kotlin/y2023/day08/day08.py) (Python)
+- [day08](src/main/kotlin/y2023/day08/day08.py) (Python) *with help*
 - [day09](src/main/kotlin/y2023/day09/Main.kt) (Kotlin)
 - [day10](src/main/kotlin/y2023/day10/Main.kt) (Kotlin)
 - [day11](src/main/kotlin/y2023/day11/Main.kt) (Kotlin)
@@ -39,7 +41,7 @@ First 7 days were chosen bye the wheel of fortune.
 - [day17](src/main/kotlin/y2023/day17/day17.cpp) (C++) [Dijkstra]
 - [day18](src/main/kotlin/y2023/day18/day18.cpp) (C++) [Grid polygon area]
 - [day19](src/main/kotlin/y2023/day19/Main.kt) (Kotlin)
-- [day20](src/main/kotlin/y2023/day20/day20.cpp) (C++) *Part 01 only*
+- [day20](src/main/kotlin/y2023/day20/day20.cpp) (C++) *with help*
 - [day21](src/main/kotlin/y2023/day21/src/main.rs) (Rust)
 - [day22](src/main/kotlin/y2023/day22/src/main.rs) (Rust)
 - [day23](src/main/kotlin/y2023/day23/src/main.rs) (Rust) [Longest path]
